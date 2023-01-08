@@ -122,3 +122,6 @@ nba_api/library/debug/
 !.vscode/tasks.json
 !.vscode/launch.json
 !.vscode/extensions.json
+
+# Package manager
+requirements.txt

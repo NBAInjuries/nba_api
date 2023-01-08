@@ -5,6 +5,8 @@ import requests
 
 from urllib.parse import quote_plus
 
+from nba_api.library.cache import retrieve_from_cache, add_to_cache
+
 try:
     from nba_api.library.debug.debug import DEBUG
 except ImportError:
@@ -108,6 +110,10 @@ class NBAHTTP:
         # Sort parameters by key... for some reason this matters for some requests...
         parameters = sorted(parameters.items(), key=lambda kv: kv[0])
 
+        in_cache = retrieve_from_cache(parameters)
+        if in_cache:
+            return in_cache
+
         if DEBUG and DEBUG_STORAGE:
             print(endpoint, parameters)
             directory_name = 'debug_storage'
@@ -143,5 +149,7 @@ class NBAHTTP:
 
         if raise_exception_on_error and not data.valid_json():
             raise Exception('InvalidResponse: Response is not in a valid JSON format.')
+
+        add_to_cache(parameters, data)
 
         return data
