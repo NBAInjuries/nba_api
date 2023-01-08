@@ -110,7 +110,7 @@ class NBAHTTP:
         # Sort parameters by key... for some reason this matters for some requests...
         parameters = sorted(parameters.items(), key=lambda kv: kv[0])
 
-        in_cache = retrieve_from_cache(parameters)
+        in_cache = retrieve_from_cache(parameters, endpoint)
         if in_cache:
             return in_cache
 
@@ -150,6 +150,6 @@ class NBAHTTP:
         if raise_exception_on_error and not data.valid_json():
             raise Exception('InvalidResponse: Response is not in a valid JSON format.')
 
-        add_to_cache(parameters, data)
+        add_to_cache(parameters, endpoint, data)
 
         return data
