@@ -1,11 +1,14 @@
 import os
 import json
 import random
+import time
+
 import requests
 
 from urllib.parse import quote_plus
 
 from nba_api.library.cache import retrieve_from_cache, add_to_cache
+from nba_api.nba_api import NBAApi
 
 try:
     from nba_api.library.debug.debug import DEBUG
@@ -75,6 +78,7 @@ class NBAHTTP:
         base_url = self.base_url.format(endpoint=endpoint)
         endpoint = endpoint.lower()
         self.parameters = parameters
+        configurations: NBAApi = NBAApi()
 
         if headers is None:
             request_headers = self.headers
@@ -85,11 +89,12 @@ class NBAHTTP:
             request_headers['Referer'] = referer
 
         if proxy is None:
-            request_proxy = PROXY
-        elif not proxy:
-            request_proxy = None
+            request_proxy = configurations.proxy
         else:
             request_proxy = proxy
+
+        if timeout is None:
+            timeout = configurations.timeout
 
         if type(request_proxy) == list:
             request_proxy = random.choice(request_proxy)
@@ -144,6 +149,9 @@ class NBAHTTP:
             f.write(contents)
             f.close()
             print(url)
+
+        if configurations.sleep:
+            time.sleep(configurations.sleep)
 
         data = self.nba_response(response=contents, status_code=status_code, url=url)
 
