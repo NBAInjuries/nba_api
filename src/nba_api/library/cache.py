@@ -8,6 +8,12 @@ def add_to_cache(parameters, endpoint, result):
     :param endpoint: Endpoint
     :param result: Result to be added
     """
+    # only add valid results to cache
+    try:
+        result.get_dict()
+    except Exception as e:
+        raise e
+
     key = _generate_cache_key(parameters, endpoint)
 
     cache[key] = result
