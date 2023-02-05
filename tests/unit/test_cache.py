@@ -15,7 +15,6 @@ def test_generate_cache_key():
 
 
 def test_local_cache():
-
     start = time.time()
     game_log_no_cache = playergamelog.PlayerGameLog(
         player_id=2544,
