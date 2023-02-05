@@ -125,3 +125,6 @@ nba_api/library/debug/
 
 # Package manager
 requirements.txt
+
+# Testing
+/test_cache/

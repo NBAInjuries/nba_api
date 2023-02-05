@@ -10,8 +10,9 @@ class Singleton(type):
 
 
 class NBAApi(metaclass=Singleton):
-    def __init__(self, proxy: str = '', sleep: int = 0, timeout: int = 25):
+    def __init__(self, proxy: str = '', sleep: int = 0, timeout: int = 25, cache_path: str = None):
         self.proxy = proxy
         self.sleep = sleep
         self.timeout = timeout
+        self.cache_path = cache_path
 

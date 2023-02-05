@@ -117,7 +117,7 @@ class NBAHTTP:
 
         in_cache = retrieve_from_cache(parameters, endpoint)
         if in_cache:
-            return in_cache
+            return self.nba_response(**in_cache)
 
         if DEBUG and DEBUG_STORAGE:
             print(endpoint, parameters)
@@ -138,6 +138,9 @@ class NBAHTTP:
                 print('loading from file...')
 
         if not contents:
+            if configurations.sleep:
+                time.sleep(configurations.sleep)
+
             response = requests.get(url=base_url, params=parameters, headers=request_headers, proxies=proxies, timeout=timeout)
             url = response.url
             status_code = response.status_code
@@ -149,9 +152,6 @@ class NBAHTTP:
             f.write(contents)
             f.close()
             print(url)
-
-        if configurations.sleep:
-            time.sleep(configurations.sleep)
 
         data = self.nba_response(response=contents, status_code=status_code, url=url)
 
