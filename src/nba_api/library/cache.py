@@ -1,4 +1,5 @@
 import ast
+import errno
 import json
 import os
 from typing import Union, Dict
@@ -8,6 +9,7 @@ import pandas as pd
 from nba_api.nba_api import NBAApi
 
 local_cache = {}
+
 
 def add_to_cache(parameters, endpoint, result):
     """
@@ -89,6 +91,8 @@ def _to_json_cache(key: str, result):
     :param key: Cache key
     :param result: Result of API
     """
+    _check_cache_dir()
+
     path = _generate_json_cache_path(key)
 
     # we've already written this file, don't overwrite
@@ -107,6 +111,8 @@ def _get_from_json_cache(key: str) -> Union[Dict, None]:
     :param key: Cache key
     :return: Csv converted to pandas object
     """
+    _check_cache_dir()
+
     path = _generate_json_cache_path(key)
 
     if not _json_file_exists(path):
@@ -144,3 +150,23 @@ def _retrieve_cache_payload(payload) -> Union[Dict, None]:
 
     payload['response'] = json.dumps(payload['response'])
     return payload
+
+
+def _check_cache_dir():
+    configurations: NBAApi = NBAApi()
+    path = configurations.cache_path
+
+    if not path:
+        return
+
+    """http://stackoverflow.com/a/600612/190597 (tzot)"""
+    try:
+        os.makedirs(path, exist_ok=True)  # Python>3.2
+    except TypeError:
+        try:
+            os.makedirs(path)
+        except OSError as exc:  # Python >2.5
+            if exc.errno == errno.EEXIST and os.path.isdir(path):
+                pass
+            else:
+                raise
