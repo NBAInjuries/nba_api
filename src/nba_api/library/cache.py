@@ -8,8 +8,6 @@ import pandas as pd
 from nba_api.nba_api import NBAApi
 
 local_cache = {}
-configurations: NBAApi = NBAApi()
-
 
 def add_to_cache(parameters, endpoint, result):
     """
@@ -25,6 +23,7 @@ def add_to_cache(parameters, endpoint, result):
         raise e
 
     key = _generate_cache_key(parameters, endpoint)
+    configurations: NBAApi = NBAApi()
 
     try:
         if configurations.cache_path:
@@ -43,6 +42,7 @@ def retrieve_from_cache(parameters, endpoint):
     :return: None if no item in cache, otherwise cache result
     """
     key = _generate_cache_key(parameters, endpoint)
+    configurations: NBAApi = NBAApi()
 
     try:
         if configurations.cache_path:
@@ -69,6 +69,8 @@ def _generate_json_cache_path(key: str) -> str:
     :param key: Key of cache
     :return: Json path
     """
+    configurations: NBAApi = NBAApi()
+
     return configurations.cache_path + f'{key}.json'
 
 
