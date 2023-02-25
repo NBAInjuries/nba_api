@@ -1,11 +1,11 @@
-from nba_api.nba_api import NBAApi
+from nba_api.custom_configurations.configuration import NBAAPIConfiguration
 
 
 def test_singleton():
-    NBAApi(sleep=5)
+    NBAAPIConfiguration(sleep=5)
 
-    assert NBAApi().sleep == 5
+    assert NBAAPIConfiguration().sleep == 5
 
-    NBAApi(sleep=10)
+    NBAAPIConfiguration(sleep=10)
 
-    assert NBAApi().sleep == 5
+    assert NBAAPIConfiguration().sleep == 5

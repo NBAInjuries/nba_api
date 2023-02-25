@@ -8,7 +8,7 @@ import requests
 from urllib.parse import quote_plus
 
 from nba_api.library.cache import retrieve_from_cache, add_to_cache
-from nba_api.nba_api import NBAApi
+from nba_api.custom_configurations.configuration import NBAAPIConfiguration
 
 try:
     from nba_api.library.debug.debug import DEBUG
@@ -78,7 +78,7 @@ class NBAHTTP:
         base_url = self.base_url.format(endpoint=endpoint)
         endpoint = endpoint.lower()
         self.parameters = parameters
-        configurations: NBAApi = NBAApi()
+        configurations: NBAAPIConfiguration = NBAAPIConfiguration()
 
         if headers is None:
             request_headers = self.headers
@@ -115,7 +115,7 @@ class NBAHTTP:
         # Sort parameters by key... for some reason this matters for some requests...
         parameters = sorted(parameters.items(), key=lambda kv: kv[0])
 
-        in_cache = retrieve_from_cache(parameters, endpoint)
+        in_cache = retrieve_from_cache(endpoint=endpoint, parameters=parameters)
         if in_cache:
             return self.nba_response(**in_cache)
 
@@ -158,6 +158,6 @@ class NBAHTTP:
         if raise_exception_on_error and not data.valid_json():
             raise Exception('InvalidResponse: Response is not in a valid JSON format.')
 
-        add_to_cache(parameters, endpoint, data)
+        add_to_cache(endpoint=endpoint, parameters=parameters, data=data)
 
         return data

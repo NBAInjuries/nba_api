@@ -1,145 +1,82 @@
-import ast
-import errno
 import json
-import os
-from typing import Union, Dict
+from typing import Union
 
-import pandas as pd
-
-from nba_api.nba_api import NBAApi
-
-local_cache = {}
+from nba_api.custom_configurations.cache import ParametersType
+from nba_api.custom_configurations.configuration import NBAAPIConfiguration
 
 
-def add_to_cache(parameters, endpoint, result):
+def add_to_cache(endpoint: str, parameters: ParametersType, data):
     """
     Add item to cache
-    :param parameters: Params of api request
     :param endpoint: Endpoint
-    :param result: Result to be added
+    :param parameters: Params of api request
+    :param data: Result to be added
     """
     # only add valid results to cache
     try:
-        result.get_dict()
+        data.get_dict()
     except Exception as e:
         raise e
 
-    key = _generate_cache_key(parameters, endpoint)
-    configurations: NBAApi = NBAApi()
+    cache_callbacks = NBAAPIConfiguration().cache_callbacks
 
-    try:
-        if configurations.cache_path:
-            _to_json_cache(key, result)
-        else:
-            local_cache[key] = _build_cache_payload(result)
-    except Exception as e:
-        print(f"Cache failure with exception: {e}")
-
-
-def retrieve_from_cache(parameters, endpoint):
-    """
-    Retrieve item from the cache
-    :param parameters: Params of api request
-    :param endpoint: Endpoint
-    :return: None if no item in cache, otherwise cache result
-    """
-    key = _generate_cache_key(parameters, endpoint)
-    configurations: NBAApi = NBAApi()
-
-    try:
-        if configurations.cache_path:
-            return _get_from_json_cache(key)
-        else:
-            return _retrieve_cache_payload(local_cache.get(key))
-    except Exception as e:
-        print(f"Cache failure with exception: {e}")
-        return None
-
-
-def _generate_cache_key(parameters, endpoint) -> str:
-    """
-    Build cache key based on method calling nba_api_call_or_retry
-    :return: Cache key
-    """
-    parameters = list(filter(lambda tup: not tup[1] == '', parameters))
-    return endpoint + ':' + str(parameters)
-
-
-def _generate_json_cache_path(key: str) -> str:
-    """
-    Generate the path where json file will be located
-    :param key: Key of cache
-    :return: Json path
-    """
-    configurations: NBAApi = NBAApi()
-
-    return configurations.cache_path + f'{key}.json'
-
-
-def _json_file_exists(path: str) -> bool:
-    """
-    If the provided path already exists
-    :param path: Json path
-    :return: True if the path exists
-    """
-    return os.path.exists(path)
-
-
-def _to_json_cache(key: str, result):
-    """
-    Write result to persistent json cache
-    :param key: Cache key
-    :param result: Result of API
-    """
-    _check_cache_dir()
-
-    path = _generate_json_cache_path(key)
-
-    # we've already written this file, don't overwrite
-    if _json_file_exists(path):
+    # no cache setup
+    if not cache_callbacks:
         return
 
-    file_content = _build_cache_payload(result)
+    cache_entity = cache_callbacks.does_entity_exist(endpoint, parameters)
+    data = _build_cache_payload(data)
 
-    with open(path, 'w') as cache_file:
-        json.dump(file_content, cache_file, indent=2)
+    # entity does not exist, create entity and return its data
+    if not cache_entity:
+        cache_callbacks.create_entity(endpoint, parameters, data)
+        return
+
+    # entity exists but it is no longer valid. needs an update
+    cache_callbacks.update_entity(cache_entity, parameters, data)
 
 
-def _get_from_json_cache(key: str) -> Union[Dict, None]:
+def retrieve_from_cache(endpoint: str, parameters: ParametersType):
     """
-    Retrieve item from persistent json cache
-    :param key: Cache key
-    :return: Csv converted to pandas object
+    Retrieve item from the cache
+    :param endpoint: Endpoint
+    :param parameters: Params of api request
+    :return: None if no item in cache, otherwise cache result
     """
-    _check_cache_dir()
+    cache_callbacks = NBAAPIConfiguration().cache_callbacks
 
-    path = _generate_json_cache_path(key)
-
-    if not _json_file_exists(path):
+    # no cache setup
+    if not cache_callbacks:
         return None
 
-    with open(path, "r") as cache_file:
-        file_content = json.load(cache_file)
+    cache_entity = cache_callbacks.does_entity_exist(endpoint, parameters)
 
-    file_content = _retrieve_cache_payload(file_content)
+    # entity does not exist in cache
+    if not cache_entity:
+        return None
 
-    return file_content
+    # entity exists and does not need a refresh
+    if cache_callbacks.is_entity_valid(cache_entity):
+        return _retrieve_cache_payload(cache_entity.data)
+
+    # entity exists but is not valid, it will be refreshed after this call
+    return None
 
 
-def _build_cache_payload(result) -> Dict:
+def _build_cache_payload(data) -> dict:
     """
     Apply cache payload in format we will store it in
-    :param result: API result
+    :param data: API result
     :return: Formatted payload
     """
     return {
-        'url': result._url,
-        'status_code': result._status_code,
-        'response': result.get_dict()
+        'url': data._url,
+        'status_code': data._status_code,
+        'response': data.get_dict()
     }
 
 
-def _retrieve_cache_payload(payload) -> Union[Dict, None]:
+def _retrieve_cache_payload(payload) -> Union[dict, None]:
     """
     Retrieve cache result in a format that nba_api will understand it
     :param payload: Result from cache
@@ -150,23 +87,3 @@ def _retrieve_cache_payload(payload) -> Union[Dict, None]:
 
     payload['response'] = json.dumps(payload['response'])
     return payload
-
-
-def _check_cache_dir():
-    configurations: NBAApi = NBAApi()
-    path = configurations.cache_path
-
-    if not path:
-        return
-
-    """http://stackoverflow.com/a/600612/190597 (tzot)"""
-    try:
-        os.makedirs(path, exist_ok=True)  # Python>3.2
-    except TypeError:
-        try:
-            os.makedirs(path)
-        except OSError as exc:  # Python >2.5
-            if exc.errno == errno.EEXIST and os.path.isdir(path):
-                pass
-            else:
-                raise

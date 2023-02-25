@@ -1,4 +1,6 @@
 # based on https://stackoverflow.com/a/51897015/16179502
+from nba_api.custom_configurations.cache import CacheCallbacks
+
 
 class Singleton(type):
     _instances = {}
@@ -9,10 +11,10 @@ class Singleton(type):
         return cls._instances[cls]
 
 
-class NBAApi(metaclass=Singleton):
-    def __init__(self, proxy: str = '', sleep: int = 0, timeout: int = 25, cache_path: str = ''):
+class NBAAPIConfiguration(metaclass=Singleton):
+    def __init__(self, proxy: str = '', sleep: int = 0, timeout: int = 25, cache_callbacks: CacheCallbacks = None):
         self.proxy = proxy
         self.sleep = sleep
         self.timeout = timeout
-        self.cache_path = cache_path
+        self.cache_callbacks = cache_callbacks
 
