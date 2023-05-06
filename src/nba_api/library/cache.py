@@ -33,7 +33,7 @@ def add_to_cache(endpoint: str, parameters: ParametersType, data):
         return
 
     # entity exists but it is no longer valid. needs an update
-    cache_callbacks.update_entity(cache_entity, parameters, data)
+    cache_callbacks.update_entity(cache_entity, data)
 
 
 def retrieve_from_cache(endpoint: str, parameters: ParametersType):

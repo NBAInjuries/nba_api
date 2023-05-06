@@ -23,7 +23,7 @@ class CacheCallbacks:
             # cache entity
             is_entity_valid: Callable[[CacheEntity], bool],
             # cache entity, data, parameters
-            update_entity: Callable[[CacheEntity, ParametersType, dict], None]
+            update_entity: Callable[[CacheEntity, dict], None]
     ):
         self.create_entity = create_entity
         self.does_entity_exist = does_entity_exist
