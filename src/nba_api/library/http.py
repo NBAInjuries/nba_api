@@ -149,8 +149,13 @@ class NBAHTTP:
             print(url)
 
         if status_code != 200:
+            filled_in_params = list(
+                filter(lambda tup: tup[1] and not tup[1] == "", parameters)
+            )
+            pretty_parameters = [f"{value[0]}:{value[1]}" for value in filled_in_params]
+
             raise NBAAPIReturnException(f"Error code '{status_code}' with endpoint '{endpoint}' and parameters"
-                                        f" '{parameters}'")
+                                        f" '{pretty_parameters}'")
 
         data = self.nba_response(response=contents, status_code=status_code, url=url)
 
