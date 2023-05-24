@@ -32,6 +32,10 @@ if DEBUG:
     from hashlib import md5
     print('DEBUG MODE')
 
+# for when we error out
+class NBAAPIReturnException(Exception):
+    pass
+
 
 class NBAResponse:
     def __init__(self, response, status_code, url):
@@ -88,18 +92,9 @@ class NBAHTTP:
         if referer:
             request_headers['Referer'] = referer
 
-        if proxy is None:
-            request_proxy = configurations.proxy
-        else:
-            request_proxy = proxy
+        request_proxy = configurations.proxy
 
-        if timeout is None:
-            timeout = configurations.timeout
-
-        if type(request_proxy) == list:
-            request_proxy = random.choice(request_proxy)
-            if DEBUG:
-                print(request_proxy)
+        timeout = configurations.timeout
 
         proxies = None
         if request_proxy:
@@ -152,6 +147,10 @@ class NBAHTTP:
             f.write(contents)
             f.close()
             print(url)
+
+        if status_code != 200:
+            raise NBAAPIReturnException(f"Error code '{status_code}' with endpoint '{endpoint}' and parameters"
+                                        f" '{parameters}'")
 
         data = self.nba_response(response=contents, status_code=status_code, url=url)
 
